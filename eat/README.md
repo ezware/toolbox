@@ -1,13 +1,13 @@
-#Usage
+# Usage
 + eat *[ NumberOfBytes ]*
 + eat 512000
 
-#Build
-##default build
-make
+# Build
+## default build
+`make`
 
-##build docker image
-make docker
+## build docker image
+`make docker`
 
-##static build
-make static
+## static build
+`make static`
