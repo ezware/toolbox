@@ -1,6 +1,6 @@
-#include<stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include<unistd.h>
+#include <unistd.h>
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
@@ -22,11 +22,11 @@ void freeall(void)
     head.next = NULL;
     head.p = NULL;
     
-    while(NULL !=p)
+    while (NULL !=p)
     {
         pp = p->next;
         p->next = NULL;
-        if (NULL !=p->p)
+        if (NULL != p->p)
         {
             free(p->p);
             p->p = NULL;
@@ -81,25 +81,25 @@ int main(int argc, char **argv)
     }
 
     memset(&stSA, 0, sizeof(struct sigaction));
-    stSA. sa_handler = sigproc;
-    ret =  sigaction(SIGHUP, &stSA, &stOldSA);
-    if (ret !=0)
+    stSA.sa_handler = sigproc;
+    ret = sigaction(SIGHUP, &stSA, &stOldSA);
+    if (ret != 0)
     {
         perror(strerror(errno));
     }
-    ret =  sigaction(SIGINT, &stSA, &stOldSA);
-    if (ret!=0)
+    ret = sigaction(SIGINT, &stSA, &stOldSA);
+    if (ret != 0)
     {
         perror(strerror(errno));
     }
 
     head.p = NULL;
     head.next = NULL;
-    n =  &head;
+    n = &head;
     printf("try to eating %d bytes of memory\n", maxSize);
-    eatSize =  maxSize /2;
+    eatSize = maxSize / 2;
 
-    while(1)
+    while (1)
     {
         next = (SL_NODE_S *)malloc(nodeSize);
         if (next ==NULL)
@@ -112,24 +112,24 @@ int main(int argc, char **argv)
         next->next = NULL;
 
         p = malloc(eatSize);
-        if (p ==NULL)
+        if (p == NULL)
         {
             printf("Failed to alloc %d bytes of memory, exiting\n",eatSize);
             break;
         }
 
-        for (pc = p, j = 0; j< eatSize; j++, pc++)
+        for (pc = p, j = 0; j < eatSize; j++, pc++)
         {
-            *pc = 'a'+j%26;
+            *pc = 'a' + j % 26;
         }
 
         n->p = p;
         n->next = next;
         n = next;
         i++;
-        totalEat += eatSize+ nodeSize;
-        printf("%d: %d bytes eated this time; total: %d bytes, eated\n",i, eatSize +nodeSize, totalEat);
-        eatSize = eatSize/2;
+        totalEat += eatSize + nodeSize;
+        printf("%d: %d bytes eated this time; total: %d bytes, eated\n",i, eatSize + nodeSize, totalEat);
+        eatSize = eatSize / 2;
         if (eatSize ==0)
         {
             break;
@@ -139,9 +139,9 @@ int main(int argc, char **argv)
 
     while (1)
     {
-        sleep (1);
+        sleep(1);
         i++;
-        printf("\rwaiting for %d seconds after eat(CTRL-C to exit)", i);
+        printf("\rwaiting for %d seconds after eat(press CTRL-C to exit)", i);
         fflush(stdout);
     }
 
