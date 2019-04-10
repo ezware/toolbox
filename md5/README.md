@@ -2,7 +2,7 @@
 `go build`
 
 # Usage
-`md5 *file*`
+md5 *files*
 
 # Example
 ```
