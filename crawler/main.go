@@ -2,19 +2,19 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"encoding/json"
 	"math/rand"
 	"net/http"
 	"os"
+	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	//"reflect"
-	"flag"
-	"regexp"
 )
 
 var (
@@ -22,12 +22,12 @@ var (
 	endblid    int
 	startbqcid int
 	endbqcid   int
-	mode int
-	maxbkcnt int
+	mode       int
+	maxbkcnt   int
 )
 
 const (
-	CRMODE_BLID  = iota
+	CRMODE_BLID = iota
 	CRMODE_BQCID
 )
 
@@ -53,7 +53,6 @@ http://hldqrcode1.oss-cn-shanghai.aliyuncs.com/wapaudio/41911(从model.blNo获�
 func main() {
 	flag.Parse()
 
-
 	var c *http.Client
 	var url string
 	var urlPrefix string = "http://hldqrcode1.oss-cn-shanghai.aliyuncs.com/wapaudio"
@@ -61,13 +60,13 @@ func main() {
 	var req *http.Request
 	var resp *http.Response
 	var err error
-	//var strbuilder strings.Builder
 	var fn string
 	var delay int
 	var td time.Duration
 	var bookInfo = map[string]interface{}{}
 	var jsonBuf []byte
 	var readBuf []byte = make([]byte, 4096)
+	var jsonFileName string
 	//var bkcnt int
 	//var bqc_id int
 
@@ -80,13 +79,6 @@ func main() {
 
 	reg := regexp.MustCompile(`[/:\*?\"><| ]`)
 
-/*
-myname := "周计划:小学英语阅读强化训练(三年级)(第二版)(赠MP3下载 二维码听读)"
-	myname = reg.ReplaceAllString(myname, "-")
-	fmt.Println(myname)
-
-	return
-	*/
 	//bqcmode:
 	//bqc_id = startbqcid
 	//for bkcnt = 0; bkcnt < maxbkcnt; bkcnt++ {
@@ -106,12 +98,27 @@ myname := "周计划:小学英语阅读强化训练(三年级)(第二版)(赠MP3
 			}
 		}
 
+		jsonFileName = "last.json"
+		ioutil.WriteFile(jsonFileName, jsonBuf, 0755)
+
 		err = json.Unmarshal(jsonBuf, &bookInfo)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Failed to parse metadata.", err)
+			continue
+		}
+		metaCode := map[string]interface{}(bookInfo)["code"]
+		if metaCode.(float64) != 0 {
+			fmt.Printf("%v.Failed to get data. %s\n", blid, jsonBuf)
+			continue
 		}
 
 		bookData := map[string]interface{}(bookInfo)["data"]
+		dtype := reflect.TypeOf(bookData).String()
+		if dtype != "map[string]interface {}" {
+			fmt.Println("%v.Type:", blid, dtype)
+			continue
+		}
+
 		bookInfoList := bookData.(map[string]interface{})["list"]
 		bookModel := bookData.(map[string]interface{})["model"]
 		blNo := bookModel.(map[string]interface{})["blNo"].(string)
@@ -121,7 +128,7 @@ myname := "周计划:小学英语阅读强化训练(三年级)(第二版)(赠MP3
 
 		bookInfoList2 := bookInfoList.([]interface{})
 		if len(bookInfoList2) < 1 {
-			fmt.Println(blName, "no resource list")
+			fmt.Println(blid, blName, "no resource list")
 			continue
 		}
 
@@ -135,10 +142,10 @@ myname := "周计划:小学英语阅读强化训练(三年级)(第二版)(赠MP3
 		err = os.Mkdir(blName, 0755)
 		if err != nil && os.IsNotExist(err) {
 			fmt.Println(err)
-			return;
+			return
 		}
-		
-		jsonFileName := fmt.Sprintf("%s/%v.json", blName, blid)
+
+		jsonFileName = fmt.Sprintf("%s/%v.json", blName, blid)
 		ioutil.WriteFile(jsonFileName, jsonBuf, 0755)
 
 		if endbqcid == 0 {
@@ -159,21 +166,16 @@ myname := "周计划:小学英语阅读强化训练(三年级)(第二版)(赠MP3
 			bqcname := bookQrContent["bqc_name"]
 			bqctype := bookQrContent["bqc_type"]
 
-			//strbuilder.Reset()
-			//strbuilder.WriteString("http://hldqrcode1.oss-cn-shanghai.aliyuncs.com/wapaudio/41911/")
-			//strconv.Itoa(i) + ".mp3"
 			fn = fmt.Sprintf("%s/%v.%s.%s", blName, bqcno, bqcname, bqctype)
-			//strbuilder.WriteString(fn)
 			url = fmt.Sprintf("%s/%s/%v.%s", urlPrefix, blNo2, bqcno, bqctype)
 			ref := fmt.Sprintf("%s%v", refPrefix, bqcid)
-			//fmt.Printf("Getting %v. %s.%s\n", bookQrContent["bqc_no"], bookQrContent["bqc_name"], bookQrContent["bqc_type"])
-
 			fmt.Printf("GET %s\nREF %s\n", url, ref)
+
 			req, err = http.NewRequest("GET", url, nil)
 			req.Header.Set("Referer", ref)
 			req.Header.Set("Range", "bytes=0-")
 			req.Header.Set("Accept-Encoding", "identity;q=1, *;q=0")
-			req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3239.132 Safari/537.36")
+			req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3239.132 Safari/537.36")
 			c = &http.Client{}
 			resp, err = c.Do(req)
 			//fmt.Println(req, err, resp, fn)
@@ -209,13 +211,10 @@ func downFile(resp *http.Response, filename string) error {
 	buff := make([]byte, 32*1024)
 	written := 0
 	for {
-		//fmt.Println("Written:", written)
 		nr, er := reader.Read(buff)
 		if nr > 0 {
-			//fmt.Println(nr)
 			fileLen = fileLen + int64(nr)
 			nw, ew := writer.Write(buff[0:nr])
-			//fmt.Println(string(buff[0:nr]))
 			if nw > 0 {
 				written += nw
 			}
