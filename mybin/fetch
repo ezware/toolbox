@@ -1,0 +1,72 @@
+#!/bin/bash
+
+################################
+# $1 repo
+# $2 clone
+# $3 retry
+################################
+function doFetch {
+  echo "Fetching $1"
+  local repo=$1
+  local isClone=0
+  local fetch="fetch"
+  local maxRetry=300
+  local endStr="HEAD[ ]*-> FETCH_HEAD"
+  if [ "$2" == "clone" ]; then
+      isClone=1
+      maxRetry=20
+      fetch="clone"
+      endStr="already exists"
+      shift
+  fi
+
+  if [[ "$2" =~ '^[0-9]+$' ]]; then
+      maxRetry=$2
+  else
+      echo "ERROR: Retry $2 is not a number"
+  fi
+
+  local i=1
+  local result=""
+  local isEnd=0
+
+  if [ ! -d .git ]; then
+      if ((!isClone)); then
+          git init
+      fi
+  fi
+
+  while ((i < maxRetry))
+  do
+    result=$(git ${fetch} $repo 2>&1)
+    isEnd=$(echo $result | grep -c "${endStr}")
+    if ((isEnd)); then
+        git pull $repo
+        echo -e "[remote \"origin\"]\n\turl = ${repo}\n\tfetch = +refs/heads/*:refs/remotes/origin/*" >> .git/config
+        git pull
+        gitcomplete.sh
+        echo "Fetch OK: $repo"
+        break
+    else
+        echo $result
+    fi
+    ((i++))
+    echo "Try $i times: $repo"
+  done
+  dotting=0
+}
+
+function printDot {
+    local s=0
+    while ((dotting))
+    do
+        echo -e -n "\r${s}s"
+        sleep 1s
+        ((s++))
+    done
+}
+
+dotting=1
+doFetch $1 $2 $3 &
+#printDot &
+wait
