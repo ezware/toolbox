@@ -23,6 +23,20 @@ function rtrim(str) {
     return str
 }
 
+function getDocNote(str) {
+    if (str == "\"\"\"") {
+        return 1;
+    } else if (str == "'''") {
+        return 2;
+    }
+    
+    return 0;
+}
+
+function isDocNote(str) {
+    return getDocNote(str);
+}
+
 function outputFnLine(fnline) {
     sub("[ ]*", "", fnline);
     printf "*" fnline "*"
@@ -49,7 +63,7 @@ function outputClassDoc(cls, clsline, doc) {
 }
 
 function beginWithDocNote(str) {
-    if (substr(str, 0, 3) == "\"\"\"") {
+    if (isDocNote(substr(str, 0, 3))) {
         return 1;
     } else {
         return 0;
@@ -62,11 +76,24 @@ function endWithDocNote(str) {
         return 0;
     }
 
-    if (substr(str, strlen - 2) == "\"\"\"") {
+    if (isDocNote(substr(str, strlen - 2))) {
         return 1;
     } else {
         return 0;
     }
+}
+
+function getBeginDocNote(str) {
+    return getDocNote(substr(str, 0, 3))
+}
+
+function getEndDocNote(str) {
+    strlen = length(str);
+    if (strlen < 3) {
+        return 0
+    }
+
+    return getDocNote(substr(str, strlen - 2));
 }
 
 function ltrimDocNote(str) {
@@ -104,15 +131,23 @@ BEGIN {
             desc="";
         }
 
-        if ($1 == "\"\"\"") {
+        if (isDocNote($1) && (NF == 1)) {
+            beginDocNote = getDocNote($1);
             state = 12;
         } else if (beginWithDocNote($1)) {
+            beginDocNote = getBeginDocNote($1)
             #doc begin with """ and no new line
             if (endWithDocNote($NF)) {
                 #doc in one line
-                clsdesc = rtrimDocNote(ltrimDocNote(rtrim(ltrim($0))));
-                outputClassDoc(cls, clsline, clsdesc);
-                state = 1;
+                endDocNote = getEndDocNote($NF);
+                if (endDocNote == beginDocNote) {
+                    clsdesc = rtrimDocNote(ltrimDocNote(rtrim(ltrim($0))));
+                    outputClassDoc(cls, clsline, clsdesc);
+                    state = 1;
+                } else {
+                    clsdesc = clsdesc "\n" ltrimDocNote($0);
+                    state = 12;                    
+                }
             } else {
                 clsdesc = clsdesc "\n" ltrimDocNote($0);
                 state = 12;
@@ -122,15 +157,30 @@ BEGIN {
     }
     case 12:	#parse class doc and doc end
     {
-        if ($1 == "\"\"\"") {
-            outputClassDoc(cls, clsline, clsdesc);
-            state = 1;
+        needAppend = 0;
+        if (isDocNote($1)) {
+            endDocNote = getDocNote($1);
+            if (endDocNote == beginDocNote) {
+                outputClassDoc(cls, clsline, clsdesc);
+                state = 1;
+            } else {
+                needAppend = 1;
+            }
         } else if (endWithDocNote($NF)) {
-            clsdesc=clsdesc "\n" rtrimDocNote($0);
-            outputClassDoc(cls, clsline, clsdesc);
-            state = 1;
+            endDocNote = getEndDocNote($NF);
+            if (endDocNote == beginDocNote) {
+                clsdesc = clsdesc "\n" rtrimDocNote(rtrim($0));
+                outputClassDoc(cls, clsline, clsdesc);
+                state = 1;
+            } else {
+                needAppend = 1;
+            }
         } else {
-            clsdesc=clsdesc "\n" $0;
+            needAppend = 1;
+        }
+
+        if (needAppend) {
+            clsdesc = clsdesc "\n" $0;
         }
         break;
     }
@@ -154,13 +204,20 @@ BEGIN {
 
     case 2:	#parse function doc begin
     { 
-        if ($1=="\"\"\"") {
+        if (isDocNote($1) && (NF == 1)) {
+            beginDocNote = getDocNote($1);
             state=3;
         } else if (beginWithDocNote($1)) {
+            beginDocNote = getBeginDocNote($1);
             if (endWithDocNote($NF)) {
-                desc = "\n" rtrimDocNote(ltrimDocNote(rtrim(ltrim($0))));
-                outputFnDoc(fn, fnline, desc);
-                state = 1;
+                endDocNote = getEndDocNote($NF);
+                if (beginDocNote == endDocNote) {
+                    desc = "\n" rtrimDocNote(ltrimDocNote(rtrim(ltrim($0))));
+                    outputFnDoc(fn, fnline, desc);
+                    state = 1;
+                } else {
+                    desc = desc "\n" ltrimDocNote($0);
+                }
             } else {
                 desc = desc "\n" ltrimDocNote($0);
                 state = 3;
@@ -183,15 +240,30 @@ BEGIN {
 
     case 3:	#parse function doc and doc end
     {
-        if ($1=="\"\"\"")
+        needAppend = 0
+        if (isDocNote($1))
         {
-            outputFnDoc(fn, fnline, desc);
-            state = 1;
+            endDocNote = getDocNote($1);
+            if (endDocNote == beginDocNote) {
+                outputFnDoc(fn, fnline, desc);
+                state = 1;
+            } else {
+                needAppend = 1;
+            }
         } else if (endWithDocNote($NF)) {
-            desc = desc "\n" rtrimDocNote($0);
-            outputFnDoc(fn, fnline, desc);
-            state = 1;
+            endDocNote = getEndDocNote($NF);
+            if (endDocNote == beginDocNote) {
+                desc = desc "\n" rtrimDocNote(rtrim($0));
+                outputFnDoc(fn, fnline, desc);
+                state = 1;
+            } else {
+                needAppend = 1;
+            }
         } else {
+            needAppend = 1;
+        }
+
+        if (needAppend) {
             desc=desc "\n" $0;
         }
         break;
