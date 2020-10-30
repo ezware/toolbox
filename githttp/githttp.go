@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/AaronO/go-git-http"
@@ -50,7 +49,7 @@ func main() {
 	listenAddr := fmt.Sprintf(":%d", httpport)
 	err := http.ListenAndServe(listenAddr, nil)
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		fmt.Println("ListenAndServe: ", err)
 	}
 
 	return
