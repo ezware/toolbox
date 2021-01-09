@@ -222,6 +222,22 @@ function addDockerAttachment {
     sed -i '/SONIC_CONFIG_USE_NATIVE_DOCKERD_FOR_BUILD.*$/a\\t[ -f /attach-docker-image/attachimage.sh ] && /attach-docker-image/attachimage.sh' slave.mk
 }
 
+function modifyAptSrc {
+    paths="sonic-slave-jessie sonic-slave-stretch sonic-slave-buster"
+    for p in $paths
+    do
+        f="$p/Dockerfile.j2"
+        if [ -f "$f" ]; then
+            echo "Modifying $f, change >> to >  /etc/apt/sources.list"
+            sed -i 's|^RUN\(.*\)>> /etc/apt|RUN\1\> /etc/apt|' $f
+        fi
+    done
+}
+
+function removeNoCacheIndicator {
+    sed -i 's/docker build --no-cache/docker build/' Makefile.work
+}
+
 pushd "$WORKDIR"
     replaceMirror 
     replaceGoogle
@@ -235,6 +251,9 @@ pushd "$WORKDIR"
     addShmOption
     addNatsort
     addDockerAttachment
+    modifyAptSrc
+    removeNoCacheIndicator
 popd
 
-
+echo "Adapting local mirror"
+${SCRIPT_PATH}/tolocalmirror.sh "$WORKDIR"

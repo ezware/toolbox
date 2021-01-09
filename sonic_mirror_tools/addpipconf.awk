@@ -23,7 +23,7 @@ BEGIN { done=0 }
 {
     if (done == 0)
     {
-        if ($0~/pip install/) 
+        if ($0~/pip[23]? install/) 
         {
             addpipconf()
             printf "\n"

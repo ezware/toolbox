@@ -69,7 +69,6 @@ sudo echo '
 172.17.0.1 storage.googleapis.com
 172.17.0.1 chromium.googlesource.com
 #10.153.3.130 mirrors.cloud.tencent.com
-10.153.3.130 mirrors.h3c.com
 172.17.0.1 sonicstorage.blob.core.windows.net
 10.153.3.130 mirrors.tuna.tsinghua.edu.cn
 10.153.3.130 debian-archive.trafficmanager.net
