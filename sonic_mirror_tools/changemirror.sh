@@ -114,6 +114,9 @@ dockers/docker-config-engine-stretch/Dockerfile.j2
         mv "${f}.tmp" "$f"
         chmod +x "$f"
     done
+
+    #TODO: add pip.conf in build_debian.sh for new master branch
+
 }
 
 function replaceSonicStorage {
@@ -168,6 +171,8 @@ function replaceGithub {
     do
         doReplaceGithub "$f"
     done
+
+    doReplaceGithub sonic-slave-buster/Dockerfile.j2
 }
 
 function modifyPyVer {
@@ -238,6 +243,11 @@ function removeNoCacheIndicator {
     sed -i 's/docker build --no-cache/docker build/' Makefile.work
 }
 
+function replaceGPGURL {
+    #make sure download public_key.gpg from original url first and put it to www/packages/debian/
+    sed -i 's|\(TRUSTED_GPG_URLS[ ]*=[ ]*http\).*$|\1://172.17.0.1/packages/debian/public_key.gpg|' rules/config
+}
+
 pushd "$WORKDIR"
     replaceMirror 
     replaceGoogle
@@ -253,6 +263,7 @@ pushd "$WORKDIR"
     addDockerAttachment
     modifyAptSrc
     removeNoCacheIndicator
+    replaceGPGURL
 popd
 
 echo "Adapting local mirror"
