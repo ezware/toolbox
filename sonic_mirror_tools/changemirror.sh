@@ -11,16 +11,16 @@ if [ "$1" != "" ]; then
 fi
 
 function replaceMirror {
-    tobeReplace="deb.debian.org security.debian.org debian-archive.trafficmanager.net http.debian.net"
+    tobeReplace="deb.debian.org security.debian.org debian-archive.trafficmanager.net http.debian.neti packages.trafficmanager.net/debian"
     replaceTo="$REPO_MIRROR"
     echo "Searching files for deb mirror replace"
-    files=$(grep -Er 'deb.debian.org|security.debian.org|debian-archive.trafficmanager.net|http.debian.net' | grep deb | awk -F: '{print $1}' | sort | uniq)
+    files=$(grep -Er 'deb.debian.org|security.debian.org|debian-archive.trafficmanager.net|http.debian.net|packages.trafficmanager.net' | grep deb | awk -F: '{print $1}' | sort | uniq)
     for f in $files
     do
         echo "Replacing file $f"
         for rr in $tobeReplace
         do
-            sed -i "s/$rr/$replaceTo/g" "$f"
+            sed -i "s|$rr|$replaceTo|g" "$f"
         done
     done
 }
