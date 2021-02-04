@@ -72,6 +72,7 @@ sonic-slave-stretch/Dockerfile.j2
 sonic-slave-buster/Dockerfile.j2
 dockers/docker-base/Dockerfile.j2
 dockers/docker-base-stretch/Dockerfile.j2
+dockers/docker-base-buster/Dockerfile.j2
 dockers/docker-config-engine-stretch/Dockerfile.j2
 "
     for f in $files
@@ -150,6 +151,13 @@ function doReplaceGithub {
     if [ "$needReplace" != "0" ]; then
         echo "Replacing github.com or salsa.debian.org in $f"
         sed -i 's/https:\/\/github.com/http:\/\/172.17.0.1:8000/g;s/http:\/\/github.com/http:\/\/172.17.0.1:8000/g;s/https:\/\/salsa.debian.org/http:\/\/172.17.0.1:8000/g' "$f"
+
+        #remove :8000 if this is wget or curl
+        needRemove=$(grep "172.17.0.1:8000" < "$f" | grep -c -E 'wget|curl')
+        if [ "$needRemove" != "0" ]; then
+            sed -i 's/\(curl .*\)172.17.0.1:8000/\1172.17.0.1/g' $f
+            sed -i 's/\(wget .*\)172.17.0.1:8000/\1172.17.0.1/g' $f
+        fi
     fi
 }
 

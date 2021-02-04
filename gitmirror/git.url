@@ -25,6 +25,7 @@ https://github.com/CESNET/libyang.git
 https://github.com/daveolson53/libnss-tacplus.git
 https://github.com/davidjamesca/ctypesgen
 https://github.com/edge-core/SONiC.git
+https://github.com/flashrom/flashrom
 https://github.com/jeroennijhof/pam_tacplus.git
 https://github.com/jpirko/libteam.git
 https://github.com/krambn/p4c-bm
@@ -49,3 +50,4 @@ https://salsa.debian.org/debian/python-click
 https://salsa.debian.org/dhcp-team/isc-dhcp.git
 https://salsa.debian.org/kernel-team/initramfs-tools.git
 https://salsa.debian.org/sk-guest/monit.git
+https://salsa.debian.org/ssh-team/openssh.git
