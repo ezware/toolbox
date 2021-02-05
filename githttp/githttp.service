@@ -1,0 +1,11 @@
+[Unit]
+Description = git http server
+After = network.target
+
+[Service]
+Type = simple
+ExecStart = /bin/githttp
+
+[Install]
+WantedBy = Multi-user.target
+

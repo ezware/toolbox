@@ -1,0 +1,11 @@
+[Unit]
+Description = go proxy server
+After = network.target
+
+[Service]
+Type = simple
+ExecStart = myproxy /bin/goproxy -gopath=/www/goproxy
+
+[Install]
+WantedBy = Multi-user.target
+
