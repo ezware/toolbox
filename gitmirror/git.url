@@ -51,3 +51,9 @@ https://salsa.debian.org/dhcp-team/isc-dhcp.git
 https://salsa.debian.org/kernel-team/initramfs-tools.git
 https://salsa.debian.org/sk-guest/monit.git
 https://salsa.debian.org/ssh-team/openssh.git
+
+#ONL git mirrors
+https://github.com/opencomputeproject/OpenNetworkLinux
+http://github.com/floodlight/infra
+http://github.com/floodlight/bigcode
+http://github.com/opennetworklinux/build-artifacts
