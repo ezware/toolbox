@@ -18,6 +18,8 @@ func addpipconf()
 
     printf("RUN [ ! -d /usr/lib/python3/dist-packages/setuptools/ ] || find /usr/lib/python3/dist-packages/setuptools/ -type f -name \"*.py\" -exec sed -i \"s/https:\\/\\/pypi.python.org/http:\\/\\/%s\\/pypi\\/web/g;s/https:\\/\\/pypi.org/http:\\/\\/%s\\/pypi\\/web/g\" {} +\n", replaceTo, replaceTo)
 
+    printf("RUN [ ! -d /usr/local/lib/python2.7/dist-packages/setuptools/ ] || find /usr/local/lib/python2.7/dist-packages/setuptools/ -type f -name \"*.py\" -exec sed -i \"s/https:\\/\\/pypi.python.org/http:\\/\\/%s\\/pypi\\/web/g;s/https:\\/\\/pypi.org/http:\\/\\/%s\\/pypi\\/web/g\" {} +\n", replaceTo, replaceTo)
+
     printf("RUN [ ! -d /usr/local/lib/python3.7/dist-packages/setuptools/ ] || find /usr/local/lib/python3.7/dist-packages/setuptools/ -type f -name \"*.py\" -exec sed -i \"s/https:\\/\\/pypi.python.org/http:\\/\\/%s\\/pypi\\/web/g;s/https:\\/\\/pypi.org/http:\\/\\/%s\\/pypi\\/web/g\" {} +\n", replaceTo, replaceTo)
 }
 
