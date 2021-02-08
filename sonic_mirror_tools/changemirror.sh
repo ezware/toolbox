@@ -114,10 +114,13 @@ dockers/docker-config-engine-stretch/Dockerfile.j2
         awk -v repomirror="$REPO_MIRROR" -f "${SCRIPT_PATH}/replace_easy_install.awk" < "$f" > "${f}.tmp"
         mv "${f}.tmp" "$f"
         chmod +x "$f"
+        sed -i "s/easy_install pip$/easy_install pip<=20.03" "$f"
     done
 
     #TODO: add pip.conf in build_debian.sh for new master branch
-
+    mkdir -p files/pip
+    echo -e "[global]\nindex-url=http://${REPO_MIRROR}/pypi/web/simple\ntrusted-host=${REPO_MIRROR}" > files/pip/pip.conf
+    sed -i "/pip[23]? install.*pip/i \ sudo cp files/pip/pip.conf $FILESYSTEMROOT/etc/" build_debian.sh
 }
 
 function replaceSonicStorage {
@@ -139,10 +142,17 @@ function replaceDepotTools {
     done
 }
 
-function addGolangProxy {
-#
-#GOPROXY="https://goproxy.cn" $(GO)
-    echo "TODO: auto add goproxy"
+function addGoProxy {
+    godirs="src/sonic-mgmt-framework src/sonic-telemetry"
+    for godir in $godirs
+    do
+        mkfiles=$(grep -r "/usr/.*go" "$godir" | grep -v "172.17.0.1:9000" | grep Makefile | awk -F: '{print $1}' | sort | uniq)
+        for mk in $mkfiles
+        do
+            echo "Adding GOPROXY for $mk"
+            sed -i "s|\(^[ \t]*GO[ \t\?:]*\)=\(.*/usr\)\(.*bin/go\)|\1= GOPROXY=http://172.17.0.1:9000 \2\3|" "$mk"
+        done
+    done
 }
 
 function doReplaceGithub {
@@ -155,8 +165,8 @@ function doReplaceGithub {
         #remove :8000 if this is wget or curl
         needRemove=$(grep "172.17.0.1:8000" < "$f" | grep -c -E 'wget|curl')
         if [ "$needRemove" != "0" ]; then
-            sed -i 's/\(curl .*\)172.17.0.1:8000/\1172.17.0.1/g' $f
-            sed -i 's/\(wget .*\)172.17.0.1:8000/\1172.17.0.1/g' $f
+            sed -i 's/\(curl .*\)172.17.0.1:8000/\1172.17.0.1/g' "$f"
+            sed -i 's/\(wget .*\)172.17.0.1:8000/\1172.17.0.1/g' "$f"
         fi
     fi
 }
@@ -229,7 +239,7 @@ function addDockerAttachment {
 
     echo "Adding docker attachment"
 
-    cp -rf ${SCRIPT_PATH}/attach-docker-image .
+    cp -rf "${SCRIPT_PATH}/attach-docker-image" .
 
     sed -i '/-v \$(DOCKER_BUILDER_MOUNT).*$/a\\t-v \$(PWD)/attach-docker-image:/attach-docker-image \\' Makefile.work
     sed -i '/SONIC_CONFIG_USE_NATIVE_DOCKERD_FOR_BUILD.*$/a\\t[ -f /attach-docker-image/attachimage.sh ] && /attach-docker-image/attachimage.sh' slave.mk
@@ -242,7 +252,7 @@ function modifyAptSrc {
         f="$p/Dockerfile.j2"
         if [ -f "$f" ]; then
             echo "Modifying $f, change >> to >  /etc/apt/sources.list"
-            sed -i 's|^RUN\(.*\)>> /etc/apt|RUN\1\> /etc/apt|' $f
+            sed -i 's|^RUN\(.*\)>> /etc/apt|RUN\1\> /etc/apt|' "$f"
         fi
     done
 }
@@ -254,6 +264,33 @@ function removeNoCacheIndicator {
 function replaceGPGURL {
     #make sure download public_key.gpg from original url first and put it to www/packages/debian/
     sed -i 's|\(TRUSTED_GPG_URLS[ ]*=[ ]*http\).*$|\1://172.17.0.1/packages/debian/public_key.gpg|' rules/config
+}
+
+function replaceFileServer {
+    local tobeReplace="repo1.maven.org"
+    local searchKeys=""
+    local key=""
+
+    for key in ${tobeReplace}
+    do
+        if [ "$searchKeys" != "" ]; then
+            searchKeys="$searchKeys|$key"
+        else
+            searchKeys="$key"
+        fi
+    done
+
+    replaceTo="172.17.0.1"  #replace to local http server
+    echo "Searching files for deb mirror replace"
+    files=$(grep -Er "${searchKeys}" | grep -E 'wget|curl' | awk -F: '{print $1}' | sort | uniq)
+    for f in $files
+    do
+        echo "Replacing file $f"
+        for rr in $tobeReplace
+        do
+            sed -i "s|$rr|$replaceTo|g" "$f"
+        done
+    done
 }
 
 pushd "$WORKDIR"
@@ -272,7 +309,9 @@ pushd "$WORKDIR"
     modifyAptSrc
     removeNoCacheIndicator
     replaceGPGURL
+    replaceFileServer
+    addGoProxy
 popd
 
 echo "Adapting local mirror"
-${SCRIPT_PATH}/tolocalmirror.sh "$WORKDIR"
+"${SCRIPT_PATH}/tolocalmirror.sh" "$WORKDIR"
