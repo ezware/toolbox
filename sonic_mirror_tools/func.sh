@@ -17,6 +17,40 @@ GIT_MIRROR_IP=${HTTP_SERVER_IP}
 GIT_MIRROR_PORT=8000
 GIT_MIRROR_ADDR="http://${GIT_MIRROR_IP}:${GIT_MIRROR_PORT}"
 
+function createPipConf {
+    local f="files/pip/pip.conf"
+    if [ -f "$f" ]; then
+        #already exists
+        return
+    fi
+
+    #create path
+    mkdir -p ${f%/*}
+
+    #create file
+    echo -e "[global]\nindex-url=http://${REPO_MIRROR}/pypi/web/simple\ntrusted-host=${REPO_MIRROR}" > "$f"
+}
+
+function createSetuptoolsFucker {
+    local f="files/pip/fucksetuptools.sh"
+    if [ -f "$f" ]; then
+        return
+    fi
+
+    #create path
+    mkdir -p ${f%/*}
+
+    #crate file
+    echo "REPO_MIRROR=${REPO_MIRROR}" > "$f"
+    echo '
+dirs=$(find /usr -type d -name setuptools)
+for d in $dirs
+do
+    [ ! -d $d ] || find $d -type f -name "*.py" -exec sed -i "s|https://pypi.python.org|http://${REPO_MIRROR}/pypi/web|g;s|https://pypi.org|http://${REPO_MIRROR}/pypi/web|g {} +"
+done
+' >> "$f"
+}
+
 function replaceMirror {
     local tobeReplace="deb.debian.org security.debian.org debian-archive.trafficmanager.net http.debian.net packages.trafficmanager.net/debian"
     local replaceTo="$REPO_MIRROR"
@@ -72,6 +106,9 @@ function replacePypi {
 ##RUN curl https://bootstrap.pypa.io/get-pip.py | python3.6
 #RUN apt-get install -y python3-pip && pip3 install -U pip
 
+    createPipConf
+    createSetuptoolsFucker
+
     #awk add xx before first pip install
     local haspipconf
     local files="
@@ -123,6 +160,19 @@ dockers/docker-config-engine-stretch/Dockerfile.j2
         mv "${f}.tmp" "$f"
         chmod +x "$f"
         sed -i "s/easy_install pip$/easy_install pip<=20.03" "$f"
+
+        haspipconf=$(grep -c "pip.conf" < "$f")
+        if ((haspipconf)); then
+            echo "$f already have pip.conf, skipping"
+            continue
+        fi
+
+        ## so fucking python, it's too nasty, fuck! ##
+        #TODO use another way to fuck
+        # add pip.conf before pip[23]? install
+        
+        # fuck setuptools after each setuptools install
+        
     done
 
     #TODO: add pip.conf in build_debian.sh for new master branch
@@ -300,7 +350,12 @@ function replaceFileServer {
         echo "Replacing file $f"
         for rr in $tobeReplace
         do
-            sed -i "s|$rr|$replaceTo|g" "$f"
+            sed -i "s|http[s]?://$rr|http://$replaceTo|g" "$f"
         done
     done
+}
+
+function tempFix {
+    local f="src/sonic-platform-common/tests/sfputilhelper_test.py"
+    sed -i '/SftUtilHelper()/d' "$f"
 }

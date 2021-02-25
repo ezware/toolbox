@@ -29,6 +29,7 @@ pushd "$WORKDIR"
     replaceGPGURL
     replaceFileServer
     addGoProxy
+    tempFix
 popd
 
 echo "Adapting local mirror"
