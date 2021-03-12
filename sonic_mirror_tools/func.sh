@@ -52,18 +52,21 @@ done
 }
 
 function replaceMirror {
-    local tobeReplace="deb.debian.org security.debian.org debian-archive.trafficmanager.net http.debian.net packages.trafficmanager.net/debian"
+    local tobeReplace="deb.debian.org security.debian.org debian-archive.trafficmanager.net http.debian.net packages.trafficmanager.net/debian ftp.debian.org"
     local replaceTo="$REPO_MIRROR"
     echo "Searching files for deb mirror replace"
-    local files=$(grep -Er 'deb.debian.org|security.debian.org|debian-archive.trafficmanager.net|http.debian.net|packages.trafficmanager.net' | grep deb | awk -F: '{print $1}' | sort | uniq)
+    local files=$(grep -Er 'deb.debian.org|security.debian.org|debian-archive.trafficmanager.net|http.debian.net|packages.trafficmanager.net|ftp.debian.org' | grep deb | awk -F: '{print $1}' | sort | uniq)
     for f in $files
     do
         echo "Replacing file $f"
         for rr in $tobeReplace
         do
-            sed -i "s|$rr|$replaceTo|g" "$f"
+            sed -i "s|${rr}|${replaceTo}|g" "$f"
         done
     done
+
+    #remove trafficmanager
+    find dockers/ -type f -name 'sources*.list*' -exec sed -i '/trafficmanager.net/d' {} +
 }
 
 function replaceGoogle {
@@ -83,7 +86,7 @@ function replaceDocker {
     do
         echo "Replacing file $f"
         #sed -i 's/download.docker.com/mirrors.tuna.tsinghua.edu.cn\/docker-ce/g' "$f"
-        sed -i "s/download.docker.com/${REPO_MIRROR}\\/docker-ce/g" "$f"
+        sed -i "s|download.docker.com|${REPO_MIRROR}/docker-ce|g" "$f"
     done
 }
 
@@ -159,7 +162,7 @@ dockers/docker-config-engine-stretch/Dockerfile.j2
         awk -v repomirror="$REPO_MIRROR" -f "${SCRIPT_PATH}/replace_easy_install.awk" < "$f" > "${f}.tmp"
         mv "${f}.tmp" "$f"
         chmod +x "$f"
-        sed -i "s/easy_install pip$/easy_install pip<=20.03" "$f"
+        sed -i "s/easy_install pip.*$/easy_install pip<=20.03/" "$f"
 
         haspipconf=$(grep -c "pip.conf" < "$f")
         if ((haspipconf)); then
@@ -178,7 +181,7 @@ dockers/docker-config-engine-stretch/Dockerfile.j2
     #TODO: add pip.conf in build_debian.sh for new master branch
     mkdir -p files/pip
     echo -e "[global]\nindex-url=http://${REPO_MIRROR}/pypi/web/simple\ntrusted-host=${REPO_MIRROR}" > files/pip/pip.conf
-    sed -i "/pip[23]? install.*pip/i \ sudo cp files/pip/pip.conf $FILESYSTEMROOT/etc/" build_debian.sh
+    sed -i "/pip[23]\? install.*pip/i \ sudo cp files/pip/pip.conf $FILESYSTEMROOT/etc/" build_debian.sh
 }
 
 function replaceSonicStorage {
@@ -186,7 +189,7 @@ function replaceSonicStorage {
     for f in $files
     do
         echo "Replacing sonic storage in $f"
-        sed -i 's/https:\/\/sonicstorage.blob.core.windows.net/http:\/\/sonicstorage.blob.core.windows.net/g' "$f"
+        sed -i 's|https://sonicstorage.blob.core.windows.net|http://sonicstorage.blob.core.windows.net|g' "$f"
     done
 }
 
@@ -342,7 +345,7 @@ function replaceFileServer {
         fi
     done
 
-    echo "Searching files for deb mirror replace"
+    echo "Searching files for file server replace"
     local replaceTo="${HTTP_SERVER_IP}"  #replace to local http server
     local files=$(grep -Er "${searchKeys}" | grep -E 'wget|curl' | awk -F: '{print $1}' | sort | uniq)
     for f in $files
@@ -350,7 +353,7 @@ function replaceFileServer {
         echo "Replacing file $f"
         for rr in $tobeReplace
         do
-            sed -i "s|http[s]?://$rr|http://$replaceTo|g" "$f"
+            sed -i "s|http[s]\?://$rr|http://$replaceTo|g" "$f"
         done
     done
 }
@@ -358,4 +361,8 @@ function replaceFileServer {
 function tempFix {
     local f="src/sonic-platform-common/tests/sfputilhelper_test.py"
     sed -i '/SftUtilHelper()/d' "$f"
+
+    #avoid get ssh/terminal failure
+    f="src/sonic-telemetry/Makefile"
+    sed -i 's|get golang.org/x/crypto/ssh/terminal@e9b2fee46413|get golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413|g' "$f"
 }

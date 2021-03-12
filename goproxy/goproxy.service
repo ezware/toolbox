@@ -2,9 +2,17 @@
 Description = go proxy server
 After = network.target
 
+#######################################################################
+#remove /bin/myproxy if you have a direct network connection.
+# or you should provid a myproxy file which containes proxy setting
+# e.g.
+#  #!/bin/bash
+#  http_proxy=http://user:pass@x.x.x.x:xx https_proxy=http://user:pass@x.x.x.x:xx $*
+#######################################################################
+
 [Service]
 Type = simple
-ExecStart = myproxy /bin/goproxy -gopath=/www/goproxy
+ExecStart = /bin/myproxy /bin/goproxy -gopath=/www/goproxy
 
 [Install]
 WantedBy = Multi-user.target
