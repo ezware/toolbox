@@ -181,7 +181,7 @@ dockers/docker-config-engine-stretch/Dockerfile.j2
     #TODO: add pip.conf in build_debian.sh for new master branch
     mkdir -p files/pip
     echo -e "[global]\nindex-url=http://${REPO_MIRROR}/pypi/web/simple\ntrusted-host=${REPO_MIRROR}" > files/pip/pip.conf
-    sed -i "/pip[23]\? install.*pip/i \ sudo cp files/pip/pip.conf $FILESYSTEMROOT/etc/" build_debian.sh
+    sed -i '/pip[23]? install.*pip/i \ sudo cp files/pip/pip.conf $FILESYSTEMROOT/etc/' build_debian.sh
 }
 
 function replaceSonicStorage {
@@ -285,6 +285,11 @@ function removeOldLibprotobuf {
             sed -i '/ENTRYPOINT/i RUN rm -rf \/usr\/lib\/x86_64-linux-gnu\/libprotobuf.so*' "$f"
         fi
     fi
+#TODO: Add protobuf and yaml
+## Add libyaml and libprotobuf
+#RUN apt-get install -y libprotobuf17 libyaml-0-2 && \ 
+#    ln -s /usr/lib/x86_64-linux-gnu/libprotobuf.so.17 /usr/lib/x86_64-linux-gnu/libprotobuf.so.10
+
 }
 
 function addShmOption {

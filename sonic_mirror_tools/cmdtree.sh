@@ -1,4 +1,4 @@
-#！/bin/bash
+#!/bin/bash
 
 #$1 base command list, split by white space, e.g. "show config", optional, default is "show config"
 #$2 outpath, optional, default is ./
