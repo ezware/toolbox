@@ -371,3 +371,24 @@ function tempFix {
     f="src/sonic-telemetry/Makefile"
     sed -i 's|get golang.org/x/crypto/ssh/terminal@e9b2fee46413|get golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413|g' "$f"
 }
+
+function addXXXNOSVer {
+    f="xxxnos.ver"
+    if [ ! -f "$f" ]; then
+        echo "XXXNOS v1.00 D001" > "$f"
+    fi
+}
+
+function addRepack {
+    local slave_mk_added
+    slave_mk_added=$(grep -c repack.mk < slave.mk)
+    if [ "$slave_mk_added" == "0" ]; then
+        echo "-include repack.mk" >> slave.mk
+    fi
+
+    if [ ! -f repack.mk ]; then
+        cp ${SCRIPT_PATH}/repack.mk .
+        cp ${SCRIPT_PATH}/repack.sh .
+        cp ${SCRIPT_PATH}/repack_script.sh .
+    fi
+}

@@ -1,0 +1,82 @@
+#!/bin/bash
+
+#list logical table
+function list() {
+    #table name
+    local tname=$1
+
+    bcmcmd "bsh -c \"lt list ${tname}\"" | grep -Ev 'bsh -c|drivshell'
+}
+
+#traverse logical table
+function traverse {
+    #table name
+    local tname=$1
+
+    #entry file name prefix
+    local efname=$2
+
+    if [ -z "$efname" ]; then
+        efname=${tname}_entry
+    fi
+
+    bcmcmd "bsh -c \"lt traverse ${tname}\"" | grep -Ev 'bsh -c|drivshell|No matching' | awk -v entry="$efname" '
+        BEGIN {
+            fid=1;
+            fname=sprintf("%s%02d.txt", entry, fid);
+            l=0
+        }{
+            l++;
+            if (NF==0) {
+                fid++;
+                fname = sprintf("%s%02d.txt", entry, fid)
+            } else {
+                print $0 >> fname
+            }
+        }
+        END {
+            if (l > 0) {
+                print "Lines:", l
+            }
+        }'
+    echo -e "Entry file list:\n$(ls -l ${efname}*.txt 2>/dev/null || echo '  No matched entry')"
+}
+
+#find logical table
+function find() {
+    bcmcmd "bsh -c \"lt list | grep ^[A-Z] | grep -i $1\"" | grep -Ev 'bsh -c|drivshell'
+}
+
+#search content from logical table
+function search() {
+    #table name
+    local tname=$1
+    local key=$2
+
+    bcmcmd "bsh -c \"lt traverse ${tname}\"" | grep -i "$key"
+}
+
+function usage() {
+    echo "$0 <command> [ params ]"
+    echo -e "\nCommands:"
+    echo "$FUNCS" | while read -d, f
+    do
+        echo "  $f"
+    done
+}
+
+FUNCS="list table-name,
+traverse table-name [ entry_name_prefix ],
+find table,
+search table-name key,"
+
+if [ $# -lt 2 ]; then
+    usage
+    exit
+fi
+
+ucmd=$1
+shift
+
+$ucmd "$@"
+

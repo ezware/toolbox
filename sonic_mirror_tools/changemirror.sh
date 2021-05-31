@@ -30,6 +30,8 @@ pushd "$WORKDIR"
     replaceFileServer
     addGoProxy
     tempFix
+    addXXXNOSVer
+    addRepack
 popd
 
 echo "Adapting local mirror"

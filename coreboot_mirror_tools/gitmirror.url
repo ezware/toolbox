@@ -1,0 +1,41 @@
+#coreboot git mirrors
+https://review.coreboot.org/coreboot
+https://review.coreboot.org/blobs.git
+https://review.coreboot.org/nvidia-cbootimage.git
+https://review.coreboot.org/vboot.git
+https://review.coreboot.org/arm-trusted-firmware.git
+https://review.coreboot.org/chrome-ec.git
+https://review.coreboot.org/libhwbase.git
+https://review.coreboot.org/libgfxinit.git
+https://review.coreboot.org/fsp.git
+https://review.coreboot.org/opensbi.git
+https://review.coreboot.org/intel-microcode.git
+https://review.coreboot.org/ffs.git
+https://review.coreboot.org/amd_blobs
+https://review.coreboot.org/cmocka.git
+https://review.coreboot.org/qc_blobs.git
+https://review.coreboot.org/9esec-security-tooling.git
+https://review.coreboot.org/STM
+https://review.coreboot.org/memtest86plus.git
+https://review.coreboot.org/seabios.git
+https://review.coreboot.org/filo.git
+#https://chromium.googlesource.com/chromiumos/platform/depthcharge
+https://github.com/tianocore/edk2
+https://github.com/mrchromebox/edk2
+https://github.com/yabits/uefi.git
+https://gitlab.com/bztsrc/bootboot.git
+https://git.savannah.gnu.org/git/grub.git
+https://git.ipxe.org/ipxe.git
+http://git.denx.de/u-boot.git
+
+#tianocore submodules
+https://github.com/openssl/openssl
+https://github.com/ucb-bar/berkeley-softfloat-3.git
+https://github.com/tianocore/edk2-cmocka.git
+https://github.com/kkos/oniguruma
+https://github.com/google/brotli
+https://github.com/akheron/jansson
+
+#grub depends
+git://git.sv.gnu.org/gnulib
+

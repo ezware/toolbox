@@ -1,0 +1,21 @@
+USERNAME=admin
+PASSWORD=admin
+SONIC_ENABLE_IMAGE_SIGNATURE=
+TARGET_PATH=./
+LOG=./log.txt
+
+export SONIC_IMAGE_VERSION=baidu-sonic-release_0.96
+export OUTPUT_ONIE_IMAGE=target/${IMAGE_VERSION}-amd64.bin
+
+echo "Repacking sonic bin"
+	USERNAME="${USERNAME}" \
+	PASSWORD="${PASSWORD}" \
+	TARGET_MACHINE="broadcom" \
+	IMAGE_TYPE="onie" \
+	SONIC_ENABLE_IMAGE_SIGNATURE="${SONIC_ENABLE_IMAGE_SIGNATURE}" \
+	SIGNING_KEY="${SIGNING_KEY}" \
+	SIGNING_CERT="${SIGNING_CERT}" \
+	CA_CERT="${CA_CERT}" \
+	TARGET_PATH="${TARGET_PATH}" \
+		./build_image.sh ${LOG}
+
