@@ -10,7 +10,7 @@ function replaceMirror {
     tobeReplace="mirrors.tuna.tsinghua.edu.cn"
     replaceTo="10.153.3.130"
     echo "Searching files for deb mirror replace"
-    files=$(grep -Er 'mirrors.tuna.tsinghua.edu.cn' | grep -E 'deb|pypi|docker' | awk -F: '{print $1}' | sort | uniq)
+    files=$(grep -Er 'mirrors.tuna.tsinghua.edu.cn' | grep -E 'deb|pypi|docker' | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
     for f in $files
     do
         echo "Replacing file $f"
@@ -23,7 +23,7 @@ function replaceMirror {
 
 function replaceGolangMirror {
     echo "Searching files for golang mirror replace"
-    files=$(grep -Er 'studygolang.com' | awk -F: '{print $1}' | sort | uniq)
+    files=$(grep -Er 'studygolang.com' | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
     for f in $files
     do
         echo "Replacing file $f"
@@ -33,7 +33,7 @@ function replaceGolangMirror {
 
 function replaceSonicMirror {
     echo "Searching files for sonicstorage replace"
-    files=$(grep -Er 'sonicstorage.blob.core.windows.net' | awk -F: '{print $1}' | sort | uniq)
+    files=$(grep -Er 'sonicstorage.blob.core.windows.net' | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
     for f in $files
     do
         echo "Replacing file $f"
@@ -43,7 +43,7 @@ function replaceSonicMirror {
 
 function changeHttps {
     echo "Searching files for https replace"
-    files=$(grep -Er 'https://10.153' | awk -F: '{print $1}' | sort | uniq)
+    files=$(grep -Er 'https://10.153' | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
     for f in $files
     do
         echo "Replacing file $f"

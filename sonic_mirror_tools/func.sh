@@ -55,7 +55,7 @@ function replaceMirror {
     local tobeReplace="deb.debian.org security.debian.org debian-archive.trafficmanager.net http.debian.net packages.trafficmanager.net/debian ftp.debian.org"
     local replaceTo="$REPO_MIRROR"
     echo "Searching files for deb mirror replace"
-    local files=$(grep -Er 'deb.debian.org|security.debian.org|debian-archive.trafficmanager.net|http.debian.net|packages.trafficmanager.net|ftp.debian.org' | grep deb | awk -F: '{print $1}' | sort | uniq)
+    local files=$(grep -Er 'deb.debian.org|security.debian.org|debian-archive.trafficmanager.net|http.debian.net|packages.trafficmanager.net|ftp.debian.org' | grep deb | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
     for f in $files
     do
         echo "Replacing file $f"
@@ -71,7 +71,7 @@ function replaceMirror {
 
 function replaceGoogle {
     echo "Searching files for google mirror replace"
-    local files=$(grep -Er 'storage.googleapis.com' | grep -v gopkg | awk -F: '{print $1}' | sort | uniq)
+    local files=$(grep -Er 'storage.googleapis.com' | grep -v gopkg | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
     for f in $files
     do
         echo "Replacing file $f"
@@ -81,7 +81,7 @@ function replaceGoogle {
 
 function replaceDocker {
     echo "Searching files for docker mirror replace"
-    local files=$(grep -Er 'download.docker.com' | awk -F: '{print $1}' | sort | uniq)
+    local files=$(grep -Er 'download.docker.com' | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
     for f in $files
     do
         echo "Replacing file $f"
@@ -139,12 +139,14 @@ dockers/docker-config-engine-stretch/Dockerfile.j2
         echo "Adding pip.conf for $f"
         awk -v repomirror="$REPO_MIRROR" -f "${SCRIPT_PATH}/addpipconf.awk" < "$f" > "${f}.tmp"
         awk -v repomirror="$REPO_MIRROR" -f "${SCRIPT_PATH}/fk_setuptools.awk" < "${f}.tmp" > "${f}"
+        rm -f "${f}.tmp"
     done
 
     #replace bootstrap pip
-    files="dockers/docker-snmp-sv2/Dockerfile.j2"
+    files="dockers/docker-snmp-sv2/Dockerfile.j2 dockers/docker-snmp/Dockerfile.j2"
     for f in $files
     do
+        [ ! -f "$f" ] && continue
         sed -i "s|https://bootstrap.pypa.io|http://${HTTP_SERVER_IP}|g" "$f"
     done
 
@@ -170,6 +172,10 @@ dockers/docker-config-engine-stretch/Dockerfile.j2
             continue
         fi
 
+        awk -v repomirror="$REPO_MIRROR" -f "${SCRIPT_PATH}/addpipconf_for_build_debiansh.awk" < "$f" > "${f}.tmp"
+        awk -v repomirror="$REPO_MIRROR" -f "${SCRIPT_PATH}/fk_setuptools_for_build_debiansh.awk" < "${f}.tmp" > "${f}"
+        rm -f "${f}.tmp"
+
         ## so fucking python, it's too nasty, fuck! ##
         #TODO use another way to fuck
         # add pip.conf before pip[23]? install
@@ -185,7 +191,7 @@ dockers/docker-config-engine-stretch/Dockerfile.j2
 }
 
 function replaceSonicStorage {
-    local files=$(grep -Er 'sonicstorage.blob.core.windows.net' | awk -F: '{print $1}' | sort | uniq)
+    local files=$(grep -Er 'sonicstorage.blob.core.windows.net' | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
     for f in $files
     do
         echo "Replacing sonic storage in $f"
@@ -207,7 +213,7 @@ function addGoProxy {
     local godirs="src/sonic-mgmt-framework src/sonic-mgmt-common src/sonic-telemetry"
     for godir in $godirs
     do
-        mkfiles=$(grep -r "^[ \t]*GO[ ]*[?:]*=.*go[ \t]*$" "$godir" | grep -v "$GOPROXY_ADDR" | grep Makefile | awk -F: '{print $1}' | sort | uniq)
+        mkfiles=$(grep -r "^[ \t]*GO[ ]*[?:]*=.*go[ \t]*$" "$godir" | grep -v "$GOPROXY_ADDR" | grep Makefile | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
         for mk in $mkfiles
         do
             echo "Adding GOPROXY for $mk"
@@ -239,13 +245,13 @@ function replaceGithub {
         doReplaceGithub "$f"
     done
 
-    files=$(grep -r "git clone" platform | awk -F: '{print $1}' | sort | uniq)
+    files=$(grep -r "git clone" platform | awk -F: '{print $1}' | grep -v README | grep -v ".rst$" | sort | uniq)
     for f in $files
     do
         doReplaceGithub "$f"
     done
 
-    files=$(grep -r "git clone" rules | awk -F: '{print $1}' | sort | uniq)
+    files=$(grep -r "git clone" rules | awk -F: '{print $1}' | grep -v README | grep -v ".rst$" | sort | uniq)
     for f in $files
     do
         doReplaceGithub "$f"
