@@ -6,9 +6,15 @@ if [ "$1" != "" ]; then
     WORKDIR=$1
 fi
 
+LOCAL_REPO_MIRROR=10.153.3.130
+
+if [ "$HTTP_SERVER_IP" == "" ]; then
+    HTTP_SERVER_IP=172.17.0.1
+fi
+
 function replaceMirror {
     tobeReplace="mirrors.tuna.tsinghua.edu.cn"
-    replaceTo="10.153.3.130"
+    replaceTo="${LOCAL_REPO_MIRROR}"
     echo "Searching files for deb mirror replace"
     files=$(grep -Er 'mirrors.tuna.tsinghua.edu.cn' | grep -E 'deb|pypi|docker' | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
     for f in $files
@@ -27,7 +33,7 @@ function replaceGolangMirror {
     for f in $files
     do
         echo "Replacing file $f"
-    	sed -i "s/https:\/\/studygolang.com/http:\/\/172.17.0.1/g" $f
+        sed -i "s/https:\/\/studygolang.com/http:\/\/${HTTP_SERVER_IP}/g" "$f"
     done
 }
 
@@ -37,17 +43,21 @@ function replaceSonicMirror {
     for f in $files
     do
         echo "Replacing file $f"
-    	sed -i "s/sonicstorage.blob.core.windows.net/172.17.0.1/g" $f
+        sed -i "s/sonicstorage.blob.core.windows.net/${HTTP_SERVER_IP}/g" "$f"
     done
+
+    #patch: change back to debian mirror
+    f="src/sonic-linux-kernel/Makefile"
+    sed -i "s|${HTTP_SERVER_IP}/debian|${LOCAL_REPO_MIRROR}/debian|g" "$f"
 }
 
 function changeHttps {
     echo "Searching files for https replace"
-    files=$(grep -Er 'https://10.153' | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
+    files=$(grep -Er "https://${LOCAL_REPO_MIRROR}" | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
     for f in $files
     do
         echo "Replacing file $f"
-        sed -i 's/https:\/\/10.153/http:\/\/10.153/g' "$f"
+        sed -i "s/https:\/\/${LOCAL_REPO_MIRROR}/http:\/\/${LOCAL_REPO_MIRROR}/g" "$f"
     done
     
 }
