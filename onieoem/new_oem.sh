@@ -5,12 +5,12 @@ product=$2
 
 machine_dir=$(pwd)
 
-if [ "$vendor" != "h3c" ]; then
-  TV_LITTLE_NAME=h3c
+if [ "$vendor" != "fky" ]; then
+  TV_LITTLE_NAME=fky
   TV_BIG_NAME=H3C
   TP_LITTLE_NAME=s6850_56hf
   TP_BIG_NAME=S6850_56HF
-  template_vendor=h3c
+  template_vendor=fky
   template_product=s6850_56hf
 else
   TV_LITTLE_NAME=tencent
@@ -44,16 +44,16 @@ function add_new_product {
 	add_plittleName=$5
 	add_pbigName=$6
 
-	# machine/h3c
+	# machine/fky
 	add_vendor_dir="${machine_dir}/${add_vendor}"
 
-	# h3c_s6850_56hf
+	# fky_s6850_56hf
 	new_product_dir="${add_vendor}_${add_product}"
 
-	# machine/h3c/h3c_s6850_56hf
+	# machine/fky/fky_s6850_56hf
 	new_product_fulldir="${add_vendor_dir}/${new_product_dir}"
 
-	# h3c_s6850_56hf
+	# fky_s6850_56hf
 	mkdir -p "${new_product_fulldir}"
 	[ -d "${add_vendor_dir}/busybox" ] || cp -rf "${machine_dir}/${template_vendor}/busybox" "${add_vendor_dir}/"
 	[ -d "${add_vendor_dir}/kernel" ] || cp -rf "${machine_dir}/${template_vendor}/kernel" "${add_vendor_dir}/"

@@ -64,9 +64,12 @@ TARGET_BIN="target/sonic-broadcom.bin"
 [ -f $FILESYSTEM_DOCKERFS ] && rm -f $FILESYSTEM_DOCKERFS
 [ -f "${TARGET_BIN}" ] && rm -f "${TARGET_BIN}"
 
-if [ "$REPACK_SCRIPT" != "" ];
+REPACK_SCRIPT=repack_script.sh
+if [ -f "$REPACK_SCRIPT" ];
 then
     . $REPACK_SCRIPT
+else
+    echo "No repack script $REPACK_SCRIPT"
 fi
 
 ## Output the file system total size for diag purpose
@@ -74,6 +77,11 @@ fi
 sudo du -hsx $FILESYSTEM_ROOT
 sudo mkdir -p $FILESYSTEM_ROOT/var/lib/docker
 
+# update version to /etc/sonic/sonic_version.yml
+SONIC_VER_UPDATE=$(sonic_get_version)
+sudo sed -i "s/\(.*build_version:\).*$/\1 '${SONIC_VER_UPDATE}'/" "$FILESYSTEM_ROOT/etc/sonic/sonic_version.yml"
+
+# attach XXXNOS version
 . attach_xxxnos_ver.sh
 
 sudo mksquashfs $FILESYSTEM_ROOT $FILESYSTEM_SQUASHFS -e boot -e var/lib/docker -e $PLATFORM_DIR

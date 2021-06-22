@@ -1,7 +1,7 @@
 #!/bin/bash
 #params
 # $1 WORKDIR (root of onl source)
-# $2 new vendor (e.g. h3c)
+# $2 new vendor (e.g. fky)
 # $3 new platform (e.g. s6850-48y8c-w1)
 # $4 new arch (e.g. x86-64)
 # $5 new vendor enterprise number(e.g. 25506)
@@ -9,10 +9,10 @@
 function usage {
 	echo "$0 WORKDIR NewVendor NewPlatform [ NewArch | NewVendorEnterpriseNumber | NewArch NewVendorEnterpriseNumber ]"
 	echo -e "  Default arch: x86-64\n  Default enterprise number: 25506\n"
-	echo "  $0 ./OpenNetworkLinux h3c s6850-48y8c-w1"
-	echo "  $0 ./OpenNetworkLinux h3c s6850-48y8c-w1 arm"
-	echo "  $0 ./OpenNetworkLinux h3c s6850-48y8c-w1 25506"
-	echo "  $0 ./OpenNetworkLinux h3c s6850-48y8c-w1 x86-64 25506"
+	echo "  $0 ./OpenNetworkLinux fky s6850-48y8c-w1"
+	echo "  $0 ./OpenNetworkLinux fky s6850-48y8c-w1 arm"
+	echo "  $0 ./OpenNetworkLinux fky s6850-48y8c-w1 25506"
+	echo "  $0 ./OpenNetworkLinux fky s6850-48y8c-w1 x86-64 25506"
 }
 
 #param check

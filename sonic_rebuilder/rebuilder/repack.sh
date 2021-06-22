@@ -82,7 +82,7 @@ SONIC_VER_UPDATE=$(sonic_get_version)
 sudo sed -i "s/\(.*build_version:\).*$/\1 '${SONIC_VER_UPDATE}'/" "$FILESYSTEM_ROOT/etc/sonic/sonic_version.yml"
 
 # attach H3CNOS version
-. attach_h3cnos_ver.sh
+. attach_fkynos_ver.sh
 
 sudo mksquashfs $FILESYSTEM_ROOT $FILESYSTEM_SQUASHFS -e boot -e var/lib/docker -e $PLATFORM_DIR
 
