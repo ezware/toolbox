@@ -295,10 +295,11 @@ function removeOldLibprotobuf {
             sed -i '/ENTRYPOINT/i RUN rm -rf \/usr\/lib\/x86_64-linux-gnu\/libprotobuf.so*' "$f"
         fi
     fi
-#TODO: Add protobuf and yaml
-## Add libyaml and libprotobuf
-#RUN apt-get install -y libprotobuf17 libyaml-0-2 && \ 
-#    ln -s /usr/lib/x86_64-linux-gnu/libprotobuf.so.17 /usr/lib/x86_64-linux-gnu/libprotobuf.so.10
+
+    # Add libyaml and libprotobuf
+    #RUN apt-get install -y libprotobuf17 libyaml-0-2 && \
+    #    ln -s /usr/lib/x86_64-linux-gnu/libprotobuf.so.17 /usr/lib/x86_64-linux-gnu/libprotobuf.so.10
+    sed -i '/RUN apt-get install.*ethtool.*$/a\\nRUN apt-get install -y libprotobuf17 libyaml-0-2 \&\& \\\n    ln -s /usr/lib/x86_64-linux-gnu/libprotobuf.so.17 /usr/lib/x86_64-linux-gnu/libprotobuf.so.10' "$f"
 
 }
 
@@ -381,12 +382,64 @@ function tempFix {
     #avoid get ssh/terminal failure
     f="src/sonic-telemetry/Makefile"
     sed -i 's|get golang.org/x/crypto/ssh/terminal@e9b2fee46413|get golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413|g' "$f"
+
+    f="src/ifupdown2/Makefile"
+    sed -i 's|\(.*wget.*\)172.17.0.1:8000|\1172.17.0.1|' "$f"
 }
 
-function addXXXNOSVer {
-    f="xxxnos.ver"
+function addVendorNOSVer {
+    f="vendornos.ver"
     if [ ! -f "$f" ]; then
         echo "XXXNOS v1.00 D001" > "$f"
+    fi
+
+    #Modify functions.sh
+    f="functions.sh"
+    if ( ! grep -c "getVendorVer" "$f"); then
+        echo '
+
+function getVendorVer() {
+    local vendor=XXX
+    local commitID=$(git rev-parse --short HEAD)
+    local buildDate=$(date +%Y%m%d%H%M)
+    local branchName=$(git rev-parse --abbrev-ref HEAD)
+    local buildNumber=${BUILD_NUMBER:-0}
+
+    #local buildDate=20210401
+    echo "${vendor}.${branchName}.${buildNumber}-${commitID}-${buildDate}"
+}' >> "$f"
+    fi
+
+    f="attach_vendornos_ver.sh"
+    if [ ! -f "$f"]; then
+    echo '#!/bin/bash
+
+#this file should embeded in build_debian.sh and put it before make squashfs
+function attach_vendornos_version() {
+    set -x
+    local FS_BASE_DIR="$1"
+    local VENDOR_IMAGE_VERSION=
+    VENDOR_IMAGE_VERSION="$(cat vendornos.ver)"
+    if [ "$VENDOR_IMAGE_VERSION" != "" ]; then
+        local showpydirs=
+	local pyfile=
+	local modified=
+        showpydirs=$(sudo find "${FS_BASE_DIR}/usr" -type d -name show | grep python)
+        for showdir in $showpydirs
+        do
+            pyfile=$(sudo find "$showdir" -type f -name 'main.py' | head -1)
+            modified=$(grep -c "XXXNOS" < "$pyfile")
+            if [ "$modified" != "0" ]; then
+		echo "XXXNOS Version already attached, removing"
+		sudo sed -i '/XXXNOS/d' "$pyfile"
+	    fi
+            sudo sed -i "s/\(.*click.echo\)\(.*SONiC Software Version.*$\)/\1\2\n\1(\"${VENDOR_IMAGE_VERSION}\")/" "$pyfile" || true
+        done
+    fi
+    return 0
+}
+
+attach_vendornos_version "$FILESYSTEM_ROOT" || true' > "$f"
     fi
 }
 

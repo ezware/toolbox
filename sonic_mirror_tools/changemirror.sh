@@ -30,7 +30,7 @@ pushd "$WORKDIR"
     replaceFileServer
     addGoProxy
     tempFix
-    addXXXNOSVer
+    addVendorNOSVer
     addRepack
 popd
 
