@@ -24,7 +24,7 @@ func main() {
 	gopathEnv := "GOPATH=" + rootdir
 	listenAddr := fmt.Sprintf(":%d", httpport)
 
-	g := goproxy.New()
+	g := goproxy.Goproxy{}
 	g.GoBinEnv = append(
 		os.Environ(),
 		"GOPROXY=https://goproxy.cn,direct", // Use goproxy.cn as the upstream proxy
@@ -35,5 +35,5 @@ func main() {
 
 	fmt.Printf("Listenning on \"%s\", %s\n", listenAddr, gopathEnv)
 
-	http.ListenAndServe(listenAddr, g)
+	http.ListenAndServe(listenAddr, &g)
 }
