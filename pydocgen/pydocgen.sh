@@ -5,7 +5,7 @@ function genDoc {
     pushd "$1" >/dev/null
 
     local doc=
-    local files=$(find . | grep \.py$ | grep -v __init__ | grep -v setup.py | sort)
+    local files=$(find . ! -type l | grep \.py$ | grep -v __init__ | grep -v setup.py | grep -v tests | sort)
     
     for f in $files
     do
