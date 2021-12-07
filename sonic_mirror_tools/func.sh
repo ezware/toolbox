@@ -9,13 +9,15 @@ REPO_MIRROR=mirrors.tuna.tsinghua.edu.cn
 
 HTTP_SERVER_IP=172.17.0.1
 
-GOPROXY_IP=${HTTP_SERVER_IP}
+#change to your git mirror ip
+GIT_MIRROR_IP="10.10.10.10"
+#GIT_MIRROR_PORT=:8000
+GIT_MIRROR_PORT=
+GIT_MIRROR_ADDR="http://${GIT_MIRROR_IP}${GIT_MIRROR_PORT}"
+
+GOPROXY_IP=${GIT_MIRROR_IP}
 GOPROXY_PORT=8100
 GOPROXY_ADDR="http://${GOPROXY_IP}:${GOPROXY_PORT}"
-
-GIT_MIRROR_IP=${HTTP_SERVER_IP}
-GIT_MIRROR_PORT=8000
-GIT_MIRROR_ADDR="http://${GIT_MIRROR_IP}:${GIT_MIRROR_PORT}"
 
 function createPipConf {
     local f="files/pip/pip.conf"
@@ -232,12 +234,12 @@ function doReplaceGithub {
         echo "Replacing github.com or salsa.debian.org in $f"
         sed -i "s|https://github.com|${GIT_MIRROR_ADDR}|g;s|http://github.com|${GIT_MIRROR_ADDR}|g;s|https://salsa.debian.org|${GIT_MIRROR_ADDR}|g" "$f"
 
-        #remove :8000 if this is wget or curl
+        #change to http server ip if this is wget or curl
         needRemove=$(grep "${GIT_MIRROR_IP}:${GIT_MIRROR_PORT}" < "$f" | grep -c -E 'wget|curl')
         if [ "$needRemove" != "0" ]; then
             echo "Removing ${GIT_MIRROR_PORT} from $f"
-            sed -i 's/\(curl .*\)${GIT_MIRROR_IP}:${GIT_MIRROR_PORT}/\1${GIT_MIRROR_IP}/g' "$f"
-            sed -i 's/\(wget .*\)${GIT_MIRROR_IP}:${GIT_MIRROR_PORT}/\1${GIT_MIRROR_IP}/g' "$f"
+            sed -i 's/\(curl .*\)${GIT_MIRROR_ADDR}/\1${HTTP_SERVER_IP}/g' "$f"
+            sed -i 's/\(wget .*\)${GIT_MIRROR_ADDR}/\1${HTTP_SERVER_IP}/g' "$f"
         fi
     fi
 }
@@ -299,8 +301,10 @@ function removeOldLibprotobuf {
     # Add libyaml and libprotobuf
     #RUN apt-get install -y libprotobuf17 libyaml-0-2 && \
     #    ln -s /usr/lib/x86_64-linux-gnu/libprotobuf.so.17 /usr/lib/x86_64-linux-gnu/libprotobuf.so.10
-    sed -i '/RUN apt-get install.*ethtool.*$/a\\nRUN apt-get install -y libprotobuf17 libyaml-0-2 \&\& \\\n    ln -s /usr/lib/x86_64-linux-gnu/libprotobuf.so.17 /usr/lib/x86_64-linux-gnu/libprotobuf.so.10' "$f"
-
+    local modified=$(grep -c "libprotobuf.so.17" "$f")
+    if [ $modified -eq 0 ]; then
+        sed -i '/RUN apt-get install.*ethtool.*$/a\\nRUN apt-get install -y libprotobuf17 libyaml-0-2 \&\& \\\n    ln -s /usr/lib/x86_64-linux-gnu/libprotobuf.so.17 /usr/lib/x86_64-linux-gnu/libprotobuf.so.10' "$f"
+    fi
 }
 
 function addShmOption {
@@ -322,7 +326,7 @@ function addDockerAttachment {
 
     cp -rf "${SCRIPT_PATH}/attach-docker-image" .
 
-    sed -i '/-v \$(DOCKER_BUILDER_MOUNT).*$/a\\t-v \$(PWD)/attach-docker-image:/attach-docker-image \\' Makefile.work
+    sed -i '/-v \$(DOCKER_BUILDER_MOUNT).*$/a\\t-v \$(PWD)/attach-docker-image:/attach-docker-image \\ ' Makefile.work
     sed -i '/SONIC_CONFIG_USE_NATIVE_DOCKERD_FOR_BUILD.*$/a\\t[ -f /attach-docker-image/attachimage.sh ] && /attach-docker-image/attachimage.sh' slave.mk
 }
 
@@ -384,7 +388,7 @@ function tempFix {
     sed -i 's|get golang.org/x/crypto/ssh/terminal@e9b2fee46413|get golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413|g' "$f"
 
     f="src/ifupdown2/Makefile"
-    sed -i 's|\(.*wget.*\)172.17.0.1:8000|\1172.17.0.1|' "$f"
+    sed -i "s|\(.*wget.*\)${GIT_MIRROR_ADDR}|\1${HTTP_SERVER_IP}|" "$f"
 }
 
 function addVendorNOSVer {
@@ -411,15 +415,15 @@ function getVendorVer() {
     fi
 
     f="attach_vendornos_ver.sh"
-    if [ ! -f "$f"]; then
-    echo '#!/bin/bash
+    if [ ! -f "$f" ]; then
+    echo -n '#!/bin/bash
 
 #this file should embeded in build_debian.sh and put it before make squashfs
 function attach_vendornos_version() {
     set -x
     local FS_BASE_DIR="$1"
     local VENDOR_IMAGE_VERSION=
-    VENDOR_IMAGE_VERSION="$(cat vendornos.ver)"
+    VENDOR_IMAGE_VERSION="$(cat h3cnos.ver)"
     if [ "$VENDOR_IMAGE_VERSION" != "" ]; then
         local showpydirs=
 	local pyfile=
@@ -427,11 +431,15 @@ function attach_vendornos_version() {
         showpydirs=$(sudo find "${FS_BASE_DIR}/usr" -type d -name show | grep python)
         for showdir in $showpydirs
         do
-            pyfile=$(sudo find "$showdir" -type f -name 'main.py' | head -1)
-            modified=$(grep -c "XXXNOS" < "$pyfile")
+            pyfile=$(sudo find "$showdir" -type f -name ' > "$f"
+    echo "'main.py' | head -1)" >> "$f"
+    echo -n '
+            modified=$(grep -c "VENDORNOS" < "$pyfile")
             if [ "$modified" != "0" ]; then
-		echo "XXXNOS Version already attached, removing"
-		sudo sed -i '/XXXNOS/d' "$pyfile"
+            	echo "VENDORNOS Version already attached, removing"
+		sudo sed -i ' >> "$f"
+    echo -n "'/VENDORNOS/d'" >> "$f"
+    echo ' "$pyfile"
 	    fi
             sudo sed -i "s/\(.*click.echo\)\(.*SONiC Software Version.*$\)/\1\2\n\1(\"${VENDOR_IMAGE_VERSION}\")/" "$pyfile" || true
         done
@@ -451,8 +459,30 @@ function addRepack {
     fi
 
     if [ ! -f repack.mk ]; then
-        cp ${SCRIPT_PATH}/repack.mk .
-        cp ${SCRIPT_PATH}/repack.sh .
-        cp ${SCRIPT_PATH}/repack_script.sh .
+        cp "${SCRIPT_PATH}/repack.mk" .
+        cp "${SCRIPT_PATH}/repack.sh" .
+        cp "${SCRIPT_PATH}/repack_script.sh" .
     fi
+}
+
+function replaceCentec {
+    echo "Searching files for centec replace"
+    local files
+    files=$(grep -Er 'CentecNetworks' | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
+    for f in $files
+    do
+        echo "Replacing file $f"
+        sed -i "s|https://github.com/CentecNetworks|http://${HTTP_SERVER_IP}/CentecNetworks|g" "$f"
+    done
+}
+
+function replacePyPkg {
+    echo "Searching files for python packages replace"
+    local files
+    files=$(grep -Er 'pypi.python.org/packages' | awk -F: '{print $1}' | grep -v ".git" | sort | uniq)
+    for f in $files
+    do
+        echo "Replacing file $f"
+        sed -i "s|https://pypi.python.org/packages|http://${REPO_MIRROR}/pypi/web/packages|g" "$f"
+    done
 }

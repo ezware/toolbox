@@ -32,6 +32,8 @@ pushd "$WORKDIR"
     tempFix
     addVendorNOSVer
     addRepack
+    replaceCentec
+    replacePyPkg
 popd
 
 echo "Adapting local mirror"

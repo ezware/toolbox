@@ -6,7 +6,8 @@ if [ "$1" != "" ]; then
     WORKDIR=$1
 fi
 
-LOCAL_REPO_MIRROR=10.153.3.130
+#replace to your repo mirror
+LOCAL_REPO_MIRROR=10.10.10.11
 
 if [ "$HTTP_SERVER_IP" == "" ]; then
     HTTP_SERVER_IP=172.17.0.1
