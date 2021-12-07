@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <title>ASCII code</title>
+        <style>
+            div {font-size: 120pt;}
+        </style>
+        <script language = "javascript">
+            var idKey = null
+            var idCode = null
+
+            function keyPress(e)
+            {
+                if (idCode == null)
+                {
+                    idCode = document.getElementById("code");
+                }
+
+                var evt = e || window.event
+
+                idCode.innerText = evt.keyCode
+                evt.preventDefault()
+                //evt.stopImmediatePropagation()
+
+                return false
+            }
+
+            function keyDown(e)
+            {
+
+                if (idKey == null)
+                {
+                    idKey = document.getElementById("key");
+                }
+                if (idCode == null)
+                {
+                    idCode = document.getElementById("code");
+                }
+
+                var evt = e || window.event
+
+                var html = ""
+                
+                if (evt.ctrlKey == true)
+                {
+                    html += "CTRL + "
+                }
+
+                if (evt.altKey == true)
+                {
+                    html += "ALT + "
+                }
+
+                if (evt.shiftKey == true)
+                {
+                    html += "SHIFT + "
+                }
+
+                html += evt.key
+                idKey.innerText = html
+                idCode.innerText = evt.keyCode
+                //evt.preventDefault()
+                //evt.stopPropagation()
+                //evt.stopImmediatePropagation()
+                return false
+            }
+        </script>
+    </head>
+
+    <body onkeypress="javascript:keyPress();" onkeydown="javascript:keyDown();">
+        <h1>Press the key you want to view the ASCII code.</h1>
+        <div align=center>
+        <div id="key"></div>
+        <div id="code"></div>
+        </div>
+    </body>
+
+</html>
