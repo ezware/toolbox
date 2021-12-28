@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Downloader</title>
+        <script src="../thrift/thrift.js"></script>
+        <script src="../thrift/gen-js/dl_types.js"></script>
+        <script src="../thrift/gen-js/Download.js"></script>
+        <script language="javascript">
+            var tclient
+            var did = 0
+            var oURL
+            var oFN
+            var oPROG
+            var oDL
+            var g_dlist = []
+            //var server='http://192.3.134.242:8200/thrift'
+            var server='http://1.1.100.169:8200/thrift'
+
+            function tclientInit()
+            {
+                oURL = document.getElementById("url")
+                oFN = document.getElementById("fn")
+                oPROG = document.getElementById("progress")
+                oDL = document.getElementById("dllist")
+                showProgress()
+
+                var transport = new Thrift.Transport(server)
+                var protocol = new Thrift.TJSONProtocol(transport)
+                tclient = new DownloadClient(protocol)
+            }
+
+            function download()
+            {
+                let url = oURL.value
+                let filename = oFN.value
+
+                did = tclient.add_dl(url, filename)
+                g_dlist.push({
+                    did: did,
+                    url: url,
+                    fn: filename,
+                    state: 1,
+                    progress: 0
+                })
+                oDL.innerHTML += "<li>" + did + ". " + url + "</li>"
+                console.log(did)
+            }
+
+            function pause()
+            {
+                tclient.pause_dl(did)
+            }
+
+            function resume()
+            {
+                tclient.resume_dl(did)
+            }
+
+            function genName()
+            {
+                let url = oURL.value
+                url = url.replace(/.*\//, "")
+                url = url.replace(/\?.*$/, "")
+                oFN.value = url
+            }
+            function urlChanged()
+            {
+                window.setTimeout(genName, 500)
+            }
+
+            var prog = 0;
+            function showProgress()
+            {
+                if (prog < 100)
+                {
+                    prog++
+                    oPROG.style.width = prog + '%'
+                    oPROG.innerText = prog + '%'
+                }
+                else
+                {
+                    prog = 0
+                }
+
+                window.setTimeout(showProgress, 500)
+            }
+        
+        </script>
+        <style>
+            input { font-size: 24px; padding: 6px; margin: 6px; }
+            .main_input { align: center; width: 96% }
+            .prog { background-color: #0ecba0; color: black; padding: 6px; height: 30px; font-size: 24px;}
+        </style>
+    </head>
+
+    <body onload="javascript: tclientInit()">
+        <div class="main_input">
+        <!--
+        <input type="text" id="server" value="http://192.3.134.242:8200/download" size=20></input>
+        <br/>
+        --!>
+        <table width = "100%">
+        <tr>
+        <td align = "right">URL:</td>
+        <td>
+        <input type="text" id="url" size = "80" name="url" onchange="javascript: urlChanged()"></input>
+        </td>
+        </tr>
+        <tr>
+        <td align = "right">FileName:</td>
+        <td>
+        <input type="text" id="fn" size = "80" name="filename"></input>
+        </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><div id="progress" class="prog"></div></td>
+        </tr>
+        </table>
+        </div>
+        <br/>
+        <input type="button" id="dl" value="Download" onclick="javascript: download()"></input>
+        <input type="button" id="pause" value="Pause" onclick="javascript: pause()"></input>
+        <input type="button" id="resume" value="Resume" onclick="javascript: resume()"></input>
+        <br/>
+        <div id="dllist"></div>
+    </body>
+</html>
