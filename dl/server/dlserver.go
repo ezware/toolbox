@@ -17,30 +17,31 @@ func NewDownloadHandler() *dlserver {
 type dlserver struct{}
 
 var g_dlist []dl.Dlinfo
+
 // Parameters:
 //  - URL
 //  - Filename
 var g_NextDid int32 = 0
 
 func (s *dlserver) AddDl(ctx context.Context, url string, filename string) (r int32, err error) {
-    fmt.Printf("Add dl, next did: %d\n", g_NextDid)
+	fmt.Printf("Add dl, next did: %d\n", g_NextDid)
 	fmt.Println("Add download, url:", url, "filename: ", filename)
 	g_NextDid++
-    dlinfo := dl.Dlinfo{Did: g_NextDid, URL: url, Filename: filename}
-    g_dlist = append(g_dlist, dlinfo)
-    go dlfile(ctx, url, filename)
+	dlinfo := dl.Dlinfo{Did: g_NextDid, URL: url, Filename: filename}
+	g_dlist = append(g_dlist, dlinfo)
+	go dlfile(ctx, url, filename)
 	return g_NextDid, nil
 }
 
 // Parameters:
 //  - Did
 func (s *dlserver) DelDl(ctx context.Context, did int32) (r int32, err error) {
-    fmt.Printf("Delete download, did: %d\n", did)
+	fmt.Printf("Delete download, did: %d\n", did)
 	if did < g_NextDid {
-        return 0, nil
+		return 0, nil
 	} else {
-	    return 1, nil
-    }
+		return 1, nil
+	}
 }
 
 // Parameters:
@@ -59,8 +60,8 @@ func (s *dlserver) ResumeDl(ctx context.Context, did int32) (r int32, err error)
 
 // Parameters:
 //  - Maxcount
-func (s *dlserver) GetDlList(ctx context.Context, maxcount int32) (r []* dl.Dlinfo, err error) {
-    var i int32
+func (s *dlserver) GetDlList(ctx context.Context, maxcount int32) (r []*dl.Dlinfo, err error) {
+	var i int32
 	for i = 1; i < maxcount; i++ {
 		r = append(r, &dl.Dlinfo{
 			Did:      i,
@@ -78,8 +79,8 @@ func (s *dlserver) GetDlList(ctx context.Context, maxcount int32) (r []* dl.Dlin
 func (s *dlserver) Redown(ctx context.Context, did int32) (r int32, err error) {
 	dlinfo := getDlInfo(did)
 	fmt.Println("re downloading ", dlinfo.Filename)
-    dlfile(ctx, dlinfo.URL, dlinfo.Filename)
-    return 0, nil
+	dlfile(ctx, dlinfo.URL, dlinfo.Filename)
+	return 0, nil
 }
 
 // Parameters:
@@ -90,21 +91,21 @@ func (s *dlserver) GetProgress(ctx context.Context, did int32, mindelta int32) (
 	return dlinfo.Progress, nil
 }
 
-func getDlInfo(did int32) * dl.Dlinfo {
+func getDlInfo(did int32) *dl.Dlinfo {
 	r := &dl.Dlinfo{Did: 100, Filename: "file100"}
 	return r
 }
 
-func dlfile(ctx context.Context, url string, name string) (err error){
-    var cmd string
+func dlfile(ctx context.Context, url string, name string) (err error) {
+	var cmd string
 
-    if name != "" {
-        cmd = "myproxy wget -O " + name + " " + url
-    } else {
-        cmd = "myproxy wget " + url
-    }
+	if name != "" {
+		cmd = "wget -O " + root + "/" + name + " " + url
+	} else {
+		cmd = "wget " + url
+	}
 
-	_ ,err = exec.CommandContext(ctx, "bash","-c", cmd).Output()
+	_, err = exec.CommandContext(ctx, "bash", "-c", cmd).Output()
 	return err
 }
 
@@ -123,12 +124,12 @@ func RunThriftInHTTPServer(w http.ResponseWriter, r *http.Request) {
 	inProtocol := thrift.NewTJSONProtocol(transport)
 	outProtocol := thrift.NewTJSONProtocol(transport)
 
-    fmt.Println("Before process")
+	fmt.Println("Before process")
 	ok, _ := processor.Process(context.Background(), inProtocol, outProtocol)
 	if !ok {
 		w.Write([]byte("Failed to process"))
 	}
-    fmt.Println("After process")
+	fmt.Println("After process")
 }
 
 func NewHTTPServerTransport(w http.ResponseWriter, r *http.Request) *HTTPServerTransport {
