@@ -120,6 +120,7 @@ function replacePypi {
 sonic-slave-jessie/Dockerfile.j2
 sonic-slave-stretch/Dockerfile.j2
 sonic-slave-buster/Dockerfile.j2
+sonic-slave-bullseye/Dockerfile.j2
 dockers/docker-base/Dockerfile.j2
 dockers/docker-base-stretch/Dockerfile.j2
 dockers/docker-base-buster/Dockerfile.j2
@@ -234,8 +235,8 @@ function doReplaceGithub {
         echo "Replacing github.com or salsa.debian.org in $f"
         sed -i "s|https://github.com|${GIT_MIRROR_ADDR}|g;s|http://github.com|${GIT_MIRROR_ADDR}|g;s|https://salsa.debian.org|${GIT_MIRROR_ADDR}|g" "$f"
 
-        #change to http server ip if this is wget or curl
-        needRemove=$(grep "${GIT_MIRROR_IP}:${GIT_MIRROR_PORT}" < "$f" | grep -c -E 'wget|curl')
+	#change to http server ip if this is wget or curl
+        needRemove=$(grep "${GIT_MIRROR_ADDR}" < "$f" | grep -c -E 'wget|curl')
         if [ "$needRemove" != "0" ]; then
             echo "Removing ${GIT_MIRROR_PORT} from $f"
             sed -i 's/\(curl .*\)${GIT_MIRROR_ADDR}/\1${HTTP_SERVER_IP}/g' "$f"
@@ -263,7 +264,7 @@ function replaceGithub {
         doReplaceGithub "$f"
     done
 
-    files="sonic-slave-stretch/Dockerfile.j2 sonic-slave-buster/Dockerfile.j2"
+    files="sonic-slave-stretch/Dockerfile.j2 sonic-slave-buster/Dockerfile.j2 sonic-slave-bullseye/Dockerfile.j2"
     for f in $files
     do
         doReplaceGithub "$f"
@@ -326,12 +327,12 @@ function addDockerAttachment {
 
     cp -rf "${SCRIPT_PATH}/attach-docker-image" .
 
-    sed -i '/-v \$(DOCKER_BUILDER_MOUNT).*$/a\\t-v \$(PWD)/attach-docker-image:/attach-docker-image \\ ' Makefile.work
+    sed -i '/-v \$(DOCKER_BUILDER_MOUNT).*$/a\\t-v \$(PWD)/attach-docker-image:/attach-docker-image \\' Makefile.work
     sed -i '/SONIC_CONFIG_USE_NATIVE_DOCKERD_FOR_BUILD.*$/a\\t[ -f /attach-docker-image/attachimage.sh ] && /attach-docker-image/attachimage.sh' slave.mk
 }
 
 function modifyAptSrc {
-    local paths="sonic-slave-jessie sonic-slave-stretch sonic-slave-buster"
+    local paths="sonic-slave-jessie sonic-slave-stretch sonic-slave-buster sonic-slave-bullseye"
     for p in $paths
     do
         f="$p/Dockerfile.j2"
@@ -484,5 +485,31 @@ function replacePyPkg {
     do
         echo "Replacing file $f"
         sed -i "s|https://pypi.python.org/packages|http://${REPO_MIRROR}/pypi/web/packages|g" "$f"
+    done
+}
+
+function replaceBfn {
+    echo "Searching files for barefoot networks replace"
+    local files=$(grep github.com platform/barefoot/*.mk)
+    for f in $files
+    do
+        echo "Replacing file $f"
+        sed -i "s|\(URL[ \t]*=[ \t]*\)\"https://github.com/|\1\"http://${HTTP_SERVER_IP}/|g" "$f"
+    done
+}
+
+function bazelFix {
+    files="sonic-slave-stretch/Dockerfile.j2 sonic-slave-buster/Dockerfile.j2 sonic-slave-bullseye/Dockerfile.j2"
+    for f in $files
+    do
+        sed -i "s|${GIT_MIRROR_IP}/bazelbuild|${HTTP_SERVER_IP}/bazelbuild|" "$f"
+    done
+}
+
+function replaceBashUrl {
+    files="src/bash/Makefile"
+    for f in $files
+    do
+        sed -i "s|https://launchpad.net|http://${HTTP_SERVER_IP}|" "$f"
     done
 }

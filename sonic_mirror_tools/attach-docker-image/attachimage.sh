@@ -7,6 +7,7 @@ if [ "$debianBuster" == "" ]; then
     echo "Loading debian:buster"
     docker load -i /attach-docker-image/debian10.tar.gz
     docker tag debian:buster debian:10
+    docker tag debian:buster amd64/debian:buster
 fi
 }
 

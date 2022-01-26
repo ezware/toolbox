@@ -34,6 +34,9 @@ pushd "$WORKDIR"
     addRepack
     replaceCentec
     replacePyPkg
+    replaceBfn
+    bazelFix
+    replaceBashUrl
 popd
 
 echo "Adapting local mirror"
