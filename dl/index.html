@@ -2,19 +2,17 @@
 <html>
     <head>
         <title>Downloader</title>
-        <script src="../thrift/thrift.js"></script>
-        <script src="../thrift/gen-js/dl_types.js"></script>
-        <script src="../thrift/gen-js/Download.js"></script>
         <script language="javascript">
-            var tclient
+            //var tclient
             var did = 0
             var oURL
             var oFN
             var oPROG
             var oDL
             var g_dlist = []
-            //var server='http://192.3.134.242:8200/thrift'
-            var server='http://1.1.100.169:8200/thrift'
+            //var server='http://192.3.134.242:8200/'
+            var endpoint = "http://localhost:8080"
+
 
             function tclientInit()
             {
@@ -23,38 +21,84 @@
                 oPROG = document.getElementById("progress")
                 oDL = document.getElementById("dllist")
                 showProgress()
-
-                var transport = new Thrift.Transport(server)
-                var protocol = new Thrift.TJSONProtocol(transport)
-                tclient = new DownloadClient(protocol)
             }
 
-            function download()
-            {
-                let url = oURL.value
-                let filename = oFN.value
 
-                did = tclient.add_dl(url, filename)
-                g_dlist.push({
+        // 下载函数
+        function download() {
+            let url = oURL.value;
+            let filename = oFN.value;
+
+            // 创建一个FormData对象来发送文件
+            let formData = '{"url": "' + url + '", "filename":"' + filename + '"}'
+            console.info(formData);
+
+            // 发送POST请求到服务器的API端点
+            fetch(endpoint + '/api/dl', { // 替换为你的API端点
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                // 处理服务器响应的数据
+                did = data.did; // 假设服务器返回的JSON中包含任务ID
+                dl = {
                     did: did,
                     url: url,
                     fn: filename,
                     state: 1,
                     progress: 0
-                })
-                oDL.innerHTML += "<li>" + did + ". " + url + "</li>"
-                console.log(did)
-            }
+                }
+                g_dlist.push(dl);
+                updateDownloadList(dl);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
 
-            function pause()
-            {
-                tclient.pause_dl(did)
-            }
+        // 暂停下载函数
+        function pause(did) {
+            // 发送请求到服务器暂停下载任务
+            fetch(endpoint + 'api/dl/' + did + '/pause', {
+                method: 'PUT'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                // 更新UI
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
 
-            function resume()
-            {
-                tclient.resume_dl(did)
-            }
+        // 恢复下载函数
+        function resume(did) {
+            // 发送请求到服务器恢复下载任务
+            fetch(endpoint + '/api/dl/' + did + '/resume', {
+                method: 'PUT'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                // 更新UI
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        // 更新下载列表显示
+        function updateDownloadList(dl) {
+            oDL.innerHTML = g_dlist.map((dl, index) => 
+                `<li>${index + 1}. ${dl.url} - ${dl.fn} (${dl.state})</li>`
+            ).join('');
+        }
 
             function genName()
             {
@@ -98,7 +142,7 @@
         <!--
         <input type="text" id="server" value="http://192.3.134.242:8200/download" size=20></input>
         <br/>
-        --!>
+        -->
         <table width = "100%">
         <tr>
         <td align = "right">URL:</td>
